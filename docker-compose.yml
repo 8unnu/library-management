@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  postgres_db:
+    hostname: ${DB_HOST}
+    image: postgres:16.4
+    container_name: postgres_db
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - .postgres_data:/var/lib/postgresql/data/
+    # открытие порта для внешнего подключения
+    ports:
+      - 6543:5432
