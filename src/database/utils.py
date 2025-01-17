@@ -13,7 +13,6 @@ async def add_user(userdata):
                         quan_books_taken=userdata.quan_books_taken)
             db.add(user)
             db.commit()
-            return {"message": "Пользовател создан"}
         except Exception as exc:
             print(exc)
 
@@ -165,3 +164,83 @@ async def edit_book_data(book_title, book_data):
             db.commit()
         except Exception as exc:
             print(f"Error: {exc}")
+
+
+async def edit_book_quantity(book_title, quantity, operation):
+    with session_maker() as db:
+        try:
+            book = db.query(Book).filter(Book.title == book_title).first()
+            if operation == "take":
+                book.quantity -= quantity
+            elif operation == "back":
+                book.quantity += quantity
+            db.commit()
+        except Exception as exc:
+            print(f"Error: {exc}")
+
+
+# books ________________________________________________________________________________________________________________
+
+
+async def borrow_book(borrowed_book_data):
+    with session_maker() as db:
+        try:
+            try:
+                borrow_book = db.query(BorrowedBook).filter(BorrowedBook.book_title == borrowed_book_data["book_title"],
+                                                            BorrowedBook.username == borrowed_book_data["username"]).first()
+                borrow_book.quantity_book_taken += borrowed_book_data["quantity_book_taken"]
+                db.commit()
+            except Exception as exc:
+                borrowed_book = BorrowedBook(
+                    username=borrowed_book_data["username"],
+                    book_title=borrowed_book_data["book_title"],
+                    back_date=borrowed_book_data["back_date"],
+                    quantity_book_taken=borrowed_book_data["quantity_book_taken"]
+                )
+                db.add(borrowed_book)
+                db.commit()
+        except Exception as exc:
+            print(f"Error: {exc}")
+
+
+async def get_borrow_books_titles(username, borrow_book_title):
+    with session_maker() as db:
+        borrow_books = db.query(BorrowedBook).filter(BorrowedBook.book_title == borrow_book_title,
+                                                     BorrowedBook.username == username).all()
+        try:
+            borrow_book_titles = [bb.book_title.capitalize() for bb in borrow_books]
+            return borrow_book_titles
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return []
+
+
+async def edit_borrow_book_quantity(username, borrow_book_title, borrow_book_quantity):
+    with session_maker() as db:
+        borrowed_book = db.query(BorrowedBook).filter(BorrowedBook.book_title == borrow_book_title,
+                                                      BorrowedBook.username == username).first()
+        try:
+            if borrow_book_quantity == borrowed_book.quantity_book_taken:
+                db.delete(borrowed_book)
+                db.commit()
+            elif borrow_book_quantity < borrowed_book.quantity_book_taken:
+                borrowed_book.quantity_book_taken -= borrow_book_quantity
+                db.commit()
+            else:
+                pass
+        except Exception as exc:
+            print(f"Error: {exc}")
+
+
+async def get_all_borrow_books(username):
+    with session_maker() as db:
+        borrow_books = db.query(BorrowedBook).filter(BorrowedBook.username == username).all()
+        try:
+            books_titles = [{"book_title": bb.book_title.capitalize(),
+                             "taken_date": bb.taken_date,
+                             "back_date": bb.back_date,
+                             "quantity_book_taken": bb.quantity_book_taken} for bb in borrow_books]
+            return books_titles
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return []

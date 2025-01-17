@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Cookie, Depends, Response
 
-from src.database.database import session_maker, User
 from src.database.utils import (add_user, edit_user_data, get_all_usernames,
-                                get_user_password, get_user_role)
+                                get_user_password, get_user_role, get_all_borrow_books)
 from src.users.models import UserRegister, UserLogin, UserEdit
 from src.users.utils import encode_jwt, decode_jwt
 
@@ -19,9 +18,21 @@ async def auth():
                        " /users/logout - чтобы разлогиниться"}
 
 
+@users_router.get("/borrow_books/")
+async def get_user_borrow_books(users: dict = Depends(get_all_usernames),
+                                access_token=Cookie(default=None)):
+    payload = await decode_jwt(access_token)
+    username = payload.get("sub")
+    is_admin = await get_user_role(username)
+    if username in users or is_admin:
+        borrow_books = await get_all_borrow_books(username)
+        return borrow_books
+
+
 @users_router.post("/register/")
 async def register(userdata: UserRegister):
     await add_user(userdata)
+    return {"message": "Пользовател создан"}
 
 @users_router.post("/login/")
 async def login(response: Response,

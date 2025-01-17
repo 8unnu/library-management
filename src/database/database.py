@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from sqlalchemy import (create_engine, func,
                         Boolean, DateTime, Column, Integer, String, ForeignKey)
 from sqlalchemy.orm import sessionmaker
@@ -48,12 +50,14 @@ class Book(Base):
     genre = Column(String)
     quantity = Column(Integer)
 
+
 class BorrowedBook(Base):
     __tablename__ = "borrowed_books"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    user_name = Column(String, ForeignKey("users.username"))
+    username = Column(String, ForeignKey("users.username"))
     book_title = Column(String, ForeignKey("books.title"))
     taken_date = Column(DateTime(timezone=True), server_default=func.now())
-    back_date = Column(DateTime())
+    back_date = Column(DateTime)
+    quantity_book_taken = Column(Integer, default=1)
 
